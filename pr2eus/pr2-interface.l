@@ -507,7 +507,7 @@
        (if wait (send move-base-trajectory-action :wait-for-result)))
      ))
   (:go-pos-unsafe
-   (x y &optional (d 0)) ;; [m] [m] [degree]
+   (x y &optional (d 0) &key (wait-result t)) ;; [m] [m] [degree]
    (ros::ros-info "go-pos-unsafe (x y d) = (~A ~A ~A)" x y d)
    (unless joint-action-enable
      (let ((orig-coords (send robot :copy-worldcoords))
@@ -534,11 +534,18 @@
        (setq goal (send self :move-trajectory (* x step) (* y step)
                         (* (deg2rad d) step) msec :stop t))
        (send move-base-trajectory-action :send-goal goal)
-       (let ((acret
-              (send move-base-trajectory-action :wait-for-result)))
-         (unless acret
-           (return-from :go-pos-unsafe nil))
-         (send move-base-trajectory-action :spin-once))
+       (cond
+        (wait-result
+         (let ((acret
+                (send move-base-trajectory-action :wait-for-result)))
+           (unless acret
+             (return-from :go-pos-unsafe nil))
+           (send move-base-trajectory-action :spin-once))
+         )
+        (t
+         (send move-base-trajectory-action :spin-once)
+         )
+        )
        (send self :spin-once)
        (send self :spin-once)
        (let ((goal-position (send (elt (send goal :goal :trajectory :points) 1) :positions)) ;; goal
