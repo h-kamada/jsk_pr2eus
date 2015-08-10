@@ -391,7 +391,6 @@
        (send* self :move-to-wait args)))
   (:move-to-send
    (coords &key (frame-id "/world") (wait-for-server-timeout 5) (count 0) &allow-other-keys)
-   (print coords)
    (let (ret (count 0) (tm (ros::time-now))
 	     (map-to-frame (send *tfl* :lookup-transform "/map" frame-id (ros::time 0))))
      ;; store in slot variable for :move-to-wait
@@ -413,7 +412,6 @@
 	   (send move-base-goal-msg :goal :target_pose :header :frame_id frame-id)
 	   (send move-base-goal-msg :goal :target_pose :pose (ros::coords->tf-pose coords))
 	 ))
-     (print (list 'map-to-frame map-to-frame 'coords coords 'goal (send (send coords :copy-worldcoords) :transform map-to-frame :world)))
      (send move-base-goal-msg :header :seq count)
      (send move-base-goal-msg :goal :target_pose :header :seq count)
      (ros::ros-info "move-to : send-goal to ~A at ~A (~d)" (ros::tf-point->pos (send move-base-goal-msg :goal :target_pose :pose :position)) (send move-base-goal-msg :goal :target_pose :header :frame_id) count)
@@ -425,7 +423,6 @@
 	     (map-to-frame move-base-goal-map-to-frame)
              (coords move-base-goal-coords))
      (if (null move-base-goal-msg) (return-from :move-to-wait nil))
-     (print (list 'wait coords))
      (while (and (null ret) (<= count retry))
        (when (> count 0) ;; retry
          (clear-costmap)
@@ -434,7 +431,6 @@
          (ros::ros-info "move-to : send-goal to ~A at ~A (~d)" (ros::tf-point->pos (send move-base-goal-msg :goal :target_pose :pose :position)) (send move-base-goal-msg :goal :target_pose :header :frame_id) count)
          (send move-base-action :send-goal move-base-goal-msg))
        (send move-base-action :wait-for-result)
-       (print (list "goal?" (ros::goal-status-to-string (send move-base-action :get-state))))
        (when (eq (send move-base-action :get-state)
                  actionlib_msgs::GoalStatus::*preempted*)
          (setq ret nil)
@@ -447,7 +443,6 @@
      (when ret
        (let (diff diff-len current-coords lret map-goal-coords)
          ;;
-         (print (list 'frame-id frame-id 'map-to-frame map-to-frame 'coords coords))
          (setq map-goal-coords
                (if (string= frame-id "/base_footprint")
                    (send (send map-to-frame :copy-worldcoords) :transform (send coords :worldcoords))
