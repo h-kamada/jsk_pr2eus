@@ -398,7 +398,7 @@
      (setq move-base-goal-map-to-frame map-to-frame)
      ;;
      (when (not (send move-base-action :wait-for-server wait-for-server-timeout))
-       (return-from :move-to))
+       (return-from :move-to-send nil))
      ;;
      (send move-base-goal-msg :header :stamp tm)
      (send move-base-goal-msg :goal :target_pose :header :stamp tm)
